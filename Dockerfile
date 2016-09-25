@@ -43,6 +43,10 @@ RUN pip install connexion
 
 # Copy server app
 COPY server /neural-style
+
+# Copy variants app
+COPY variants.py /neural-style
+
 ENTRYPOINT ["th", "neural_style.lua"]
 CMD ["-backend", "cudnn", "-cudnn_autotune"]
 

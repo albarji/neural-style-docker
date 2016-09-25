@@ -21,6 +21,14 @@ To apply the neural-style method on some host images, mount a volume such as
 	nvidia-docker run --rm -v $(pwd):/images neural-style -backend cudnn -cudnn_autotune -content_image /images/content.png -style_image /images/style.png -output_image /images/output.png
 
 In order to take full advantage of the cudnn libraries (also included in the image) the options -backend cudnn -cudnn_autotune are always recommended.
+
+### Generating variants
+
+Running the command 
+
+	nvidia-docker run --rm --entrypoint python neural-style variants.py
+
+will generate several variants of the same image blends, for different neural-style parameters. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
 	
 ## Use as server
 
