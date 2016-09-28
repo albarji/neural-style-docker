@@ -1,4 +1,4 @@
-FROM nvidia/cuda:7.5-cudnn5-devel
+FROM kaixhin/cuda-torch
 MAINTAINER "Álvaro Barbero Jiménez, https://github.com/albarji"
 
 # Install git and other system dependencies
@@ -8,18 +8,11 @@ RUN apt-get update && apt-get install -y \
 	protobuf-compiler \
 	wget
 
-# Install torch
-RUN git clone https://github.com/torch/distro.git /torch --recursive && \
-	cd /torch && \ 
-	bash install-deps && \
-	./install.sh
-# Add torch to path
-ENV PATH /torch/install/bin:$PATH
-
 # Install loadcaffe and other torch dependencies
 RUN luarocks install loadcaffe
 
 # Clone neural-style app
+WORKDIR /
 RUN git clone https://github.com/jcjohnson/neural-style.git
 WORKDIR neural-style
 

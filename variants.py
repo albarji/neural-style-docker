@@ -56,7 +56,6 @@ def generatevariants(content, style, outfolder,
     for styleweight in styleweights:
         for stylescale in stylescales:
             outname = getoutname(content, style, outfolder, styleweight, stylescale)
-            print(outname, flush=True) #FIXME
             # Generate only if doesn't exist already
             if not os.path.isfile(outname):
                 blendimages(content, style, outname, styleweight, stylescale)
