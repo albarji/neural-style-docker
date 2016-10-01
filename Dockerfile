@@ -40,6 +40,17 @@ COPY server /neural-style
 # Copy variants app
 COPY variants.py /neural-style
 
-ENTRYPOINT ["th", "neural_style.lua"]
+# Add entry point script
+COPY neural-style.sh /neural-style
+
+# Prepare folder for mounting images and workplaces
+WORKDIR /images
+VOLUME ["/images"]
+
+# Add neural-style to path
+ENV PATH /neural-style:$PATH
+
+RUN chmod +x /neural-style/neural-style.sh
+ENTRYPOINT ["neural-style.sh"]
 CMD ["-backend", "cudnn", "-cudnn_autotune"]
 

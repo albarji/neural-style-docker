@@ -10,7 +10,6 @@ scaling of style.
 import argparse
 from subprocess import call
 import os
-from ast import literal_eval
 
 def blendimages(content, style, outname, styleweight=1500, stylescale=1):
     """Blends content and style images with some given parameters
@@ -20,7 +19,9 @@ def blendimages(content, style, outname, styleweight=1500, stylescale=1):
     """    
     print("Generating blend for", content, "+", style, "with styleweight",
           str(styleweight), ", stylescale", str(stylescale))
-    call(["th", "neural_style.lua", 
+    call(["th", "/neural-style/neural_style.lua", 
+          "-proto_file", "/neural-style/models/VGG_ILSVRC_19_layers_deploy.prototxt",
+          "-model_file", "/neural-style/models/VGG_ILSVRC_19_layers.caffemodel",
           "-backend", "cudnn",
           "-cudnn_autotune",
           "-normalize_gradients",
@@ -60,18 +61,35 @@ def generatevariants(content, style, outfolder,
             if not os.path.isfile(outname):
                 blendimages(content, style, outname, styleweight, stylescale)
 
-def generatelists(contents, styles, outfolder):
+def generatelists(contents, styles, outfolder, **kwargs):
     """Generates all possible blends of given content and style images"""
     for content in contents:
         for style in styles:
-            generatevariants(content, style, outfolder)
+            generatevariants(content, style, outfolder, **kwargs)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate variants of neural-style blends')
     parser.add_argument('--contents', nargs='+', type=str, help='list of content images')
     parser.add_argument('--styles', nargs='+', type=str, help='list of style images')
     parser.add_argument('--outfolder', type=str, help='output folder')
+    parser.add_argument('--styleweights', type=str, default=None, 
+                        help='comma-separated list of style weights to try')
+    parser.add_argument('--stylescales', type=str, default=None, 
+                        help='comma-separated list of style scale to try')
     args = parser.parse_args()
     
-    generatelists(args.contents, args.styles, args.outfolder)
+    if args.contents is None: 
+        raise ValueError("--contents arguments is required")
+    if args.styles is None: 
+        raise ValueError("--styles arguments is required")        
+    if args.outfolder is None:
+        raise ValueError("--outfolder argument is required")        
+    
+    extrargs = {}
+    if args.styleweights is not None:
+        extrargs["styleweights"] = [float(x) for x in args.styleweights.split(",")]
+    if args.stylescales is not None:
+        extrargs["stylescales"] = [float(x) for x in args.stylescales.split(",")]
+        
+    generatelists(args.contents, args.styles, args.outfolder, **extrargs)
     
