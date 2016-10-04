@@ -2,11 +2,12 @@ FROM kaixhin/cuda-torch
 MAINTAINER "Álvaro Barbero Jiménez, https://github.com/albarji"
 
 # Install git and other system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
 	git \
 	libprotobuf-dev \
 	protobuf-compiler \
-	wget
+	wget \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Install loadcaffe and other torch dependencies
 RUN luarocks install loadcaffe
