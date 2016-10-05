@@ -1,9 +1,8 @@
 FROM kaixhin/cuda-torch
 MAINTAINER "Álvaro Barbero Jiménez, https://github.com/albarji"
 
-# Install git and other system dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-	git \
 	libprotobuf-dev \
 	protobuf-compiler \
 	wget \
@@ -14,7 +13,10 @@ RUN luarocks install loadcaffe
 
 # Clone neural-style app
 WORKDIR /
-RUN git clone https://github.com/jcjohnson/neural-style.git
+RUN wget --no-check-certificate https://github.com/jcjohnson/neural-style/archive/master.tar.gz && \
+	tar -xvzf master.tar.gz && \
+    mv neural-style-master neural-style && \
+	rm master.tar.gz
 WORKDIR neural-style
 
 # Download precomputed network weights
