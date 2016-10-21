@@ -1,5 +1,18 @@
 # neural-style-docker
 
+![Stylized Docker](./img/docker_afremov_sw5000_ss1.png)
+![Stylized Docker](./img/docker_broca_sw5000_ss1.png)
+![Stylized Docker](./img/docker_brownrays_sw375_ss1.png)
+![Stylized Docker](./img/docker_ediaonise_sw1500_ss1.png)
+![Stylized Docker](./img/docker_edimburgGraffit_sw20000.0_ss1.png)
+![Stylized Docker](./img/docker_himesama_sw10000_ss1.png)
+![Stylized Docker](./img/docker_paisaje_urbano-hundertwasser_sw2000_ss1.png)
+![Stylized Docker](./img/docker_potatoes_sw375_ss1.png)
+![Stylized Docker](./img/docker_RenoirDogesPalaceVenice_sw1500_ss1.png)
+![Stylized Docker](./img/docker_revellerAndCourtesan_sw2000_ss1.png)
+![Stylized Docker](./img/docker_seated-nude_sw375_ss1.png)
+![Stylized Docker](./img/docker_starryNight_sw1500_ss1.png)
+
 A dockerized version of the [neural style algorithm by jcjohnson](https://github.com/jcjohnson/neural-style), with a simple flask server to produce images. [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is used to make use of GPU hardware if available.
 
 ## Install
