@@ -2,7 +2,8 @@ FROM kaixhin/cuda-torch
 MAINTAINER "Álvaro Barbero Jiménez, https://github.com/albarji"
 
 # Install system dependencies
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+RUN set -ex && \
+	apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
 	libprotobuf-dev \
 	protobuf-compiler \
 	wget \
@@ -13,7 +14,8 @@ RUN luarocks install loadcaffe
 
 # Clone neural-style app
 WORKDIR /
-RUN wget --no-check-certificate https://github.com/jcjohnson/neural-style/archive/master.tar.gz && \
+RUN set -ex && \
+	wget --no-check-certificate https://github.com/jcjohnson/neural-style/archive/master.tar.gz && \
 	tar -xvzf master.tar.gz && \
     mv neural-style-master neural-style && \
 	rm master.tar.gz
@@ -27,7 +29,8 @@ RUN mkdir /models
 VOLUME ["/neural-style/models"]
 
 # Install python miniconda
-RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
+RUN set -ex && \
+	echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
     wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.0.5-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
 	rm ~/miniconda.sh
@@ -52,6 +55,9 @@ VOLUME ["/images"]
 
 # Add neural-style to path
 ENV PATH /neural-style:$PATH
+
+# Expose API ports
+EXPOSE 80
 
 RUN chmod +x /neural-style/neural-style.sh
 ENTRYPOINT ["neural-style.sh"]
