@@ -17,7 +17,13 @@ A dockerized version of the [neural style algorithm by jcjohnson](https://github
 
 ## Install
 
-The only prerequisites you need are docker and nvidia-docker. To build the image type
+Prerequisites
+
+* [docker](https://www.docker.com/)
+* [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
+* Appropriate nvidia drivers for your GPU
+
+Once this is met you can build the image with
 
 	nvidia-docker build -t neural-style .
 
@@ -37,13 +43,22 @@ The container uses as work directory the /images folder, so the results will be 
 
 In order to take full advantage of the cudnn libraries (also included in the image) the options -backend cudnn -cudnn_autotune are always recommended.
 
+As an example, let's redraw Docker's logo in the famous style of Van Gogh's Starry Night:
+
+	nvidia-docker run --rm -v $(pwd):/images neural-style -backend cudnn -cudnn_autotune -content_image img/docker.png -style_image img/starryNight.jpg
+
 ### Generating variants
 
 Running the command 
 
 	nvidia-docker run --rm --entrypoint python neural-style /neural-style/variants.py
 
-will generate several variants of the same image blends, for different neural-style parameters. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
+will generate several variants of the same image blends, for different neural-style parameters that work well in general. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
+
+For example, to generate different variants of Docker logo + Starry Night:
+
+	nvidia-docker run --rm -v $(pwd):/images --entrypoint python neural-style /neural-style/variants.py --contents img/docker.png --styles img/starryNight.jpg --outfolder .
+
 	
 ## Use as server
 
