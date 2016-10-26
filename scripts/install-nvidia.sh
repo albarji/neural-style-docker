@@ -10,10 +10,6 @@ sudo sh /tmp/NVIDIA-Linux-x86_64-361.42.run --silent
 wget -P /tmp https://github.com/NVIDIA/nvidia-docker/releases/download/v1.0.0-rc.3/nvidia-docker_1.0.0.rc.3-1_amd64.deb
 sudo dpkg -i /tmp/nvidia-docker*.deb && rm /tmp/nvidia-docker*.deb
 
-# Add login user to docker and nvidia-docker groups
-newgrp docker
-newgrp nvidia-docker
-
 # Tests install
-nvidia-docker run --rm nvidia/cuda nvidia-smi
+sudo nvidia-docker run --rm nvidia/cuda nvidia-smi
 
