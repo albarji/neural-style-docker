@@ -1,17 +1,17 @@
 # neural-style-docker
 
-![Stylized Docker](./img/docker_afremov_sw5000_ss1.png)
-![Stylized Docker](./img/docker_broca_sw5000_ss1.png)
-![Stylized Docker](./img/docker_brownrays_sw375_ss1.png)
-![Stylized Docker](./img/docker_ediaonise_sw1500_ss1.png)
-![Stylized Docker](./img/docker_edimburgGraffit_sw20000.0_ss1.png)
-![Stylized Docker](./img/docker_himesama_sw10000_ss1.png)
-![Stylized Docker](./img/docker_paisaje_urbano-hundertwasser_sw2000_ss1.png)
-![Stylized Docker](./img/docker_potatoes_sw375_ss1.png)
-![Stylized Docker](./img/docker_RenoirDogesPalaceVenice_sw1500_ss1.png)
-![Stylized Docker](./img/docker_revellerAndCourtesan_sw2000_ss1.png)
-![Stylized Docker](./img/docker_seated-nude_sw375_ss1.png)
-![Stylized Docker](./img/docker_starryNight_sw1500_ss1.png)
+![Stylized Docker](./doc/docker_afremov_sw5000_ss1.png)
+![Stylized Docker](./doc/docker_broca_sw5000_ss1.png)
+![Stylized Docker](./doc/docker_brownrays_sw375_ss1.png)
+![Stylized Docker](./doc/docker_ediaonise_sw1500_ss1.png)
+![Stylized Docker](./doc/docker_edimburgGraffit_sw20000.0_ss1.png)
+![Stylized Docker](./doc/docker_himesama_sw10000_ss1.png)
+![Stylized Docker](./doc/docker_paisaje_urbano-hundertwasser_sw2000_ss1.png)
+![Stylized Docker](./doc/docker_potatoes_sw375_ss1.png)
+![Stylized Docker](./doc/docker_RenoirDogesPalaceVenice_sw1500_ss1.png)
+![Stylized Docker](./doc/docker_revellerAndCourtesan_sw2000_ss1.png)
+![Stylized Docker](./doc/docker_seated-nude_sw375_ss1.png)
+![Stylized Docker](./doc/docker_starryNight_sw1500_ss1.png)
 
 A dockerized version of the [neural style algorithm by jcjohnson](https://github.com/jcjohnson/neural-style), with a simple flask server to produce images. [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is used to make use of GPU hardware if available.
 
@@ -45,7 +45,7 @@ In order to take full advantage of the cudnn libraries (also included in the ima
 
 As an example, let's redraw Docker's logo in the famous style of Van Gogh's Starry Night:
 
-	nvidia-docker run --rm -v $(pwd):/images neural-style -backend cudnn -cudnn_autotune -content_image img/docker.png -style_image img/starryNight.jpg
+	nvidia-docker run --rm -v $(pwd):/images neural-style -backend cudnn -cudnn_autotune -content_image doc/docker.png -style_image doc/starryNight.jpg
 
 ### Generating variants
 
@@ -57,7 +57,7 @@ will generate several variants of the same image blends, for different neural-st
 
 For example, to generate different variants of Docker logo + Starry Night:
 
-	nvidia-docker run --rm -v $(pwd):/images --entrypoint python neural-style /neural-style/variants.py --contents img/docker.png --styles img/starryNight.jpg --outfolder .
+	nvidia-docker run --rm -v $(pwd):/images --entrypoint python neural-style /neural-style/variants.py --contents doc/docker.png --styles doc/starryNight.jpg --outfolder .
 
 	
 ## Use as server
