@@ -40,7 +40,7 @@ ENV PATH /opt/conda/bin:$PATH
 RUN conda install scikit-image
 RUN pip install connexion
 
-COPY ["server", "/scripts/variants.py", "/scripts/neural-style.sh", "/neural-style"]
+COPY ["server", "/scripts/variants.py", "/scripts/neural-style.sh", "/neural-style/"]
 
 # Add neural-style to path
 ENV PATH /neural-style:$PATH
