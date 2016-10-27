@@ -40,26 +40,18 @@ ENV PATH /opt/conda/bin:$PATH
 RUN conda install scikit-image
 RUN pip install connexion
 
-# Copy server app
-COPY server /neural-style
+COPY ["server", "/scripts/variants.py", "/scripts/neural-style.sh", "/neural-style/"]
 
-# Copy variants app
-COPY variants.py /neural-style
-
-# Add entry point script
-COPY neural-style.sh /neural-style
+# Add neural-style to path
+ENV PATH /neural-style:$PATH
 
 # Prepare folder for mounting images and workplaces
 WORKDIR /images
 VOLUME ["/images"]
 
-# Add neural-style to path
-ENV PATH /neural-style:$PATH
-
 # Expose API ports
 EXPOSE 80
 
-RUN chmod +x /neural-style/neural-style.sh
 ENTRYPOINT ["neural-style.sh"]
 CMD ["-backend", "cudnn", "-cudnn_autotune"]
 
