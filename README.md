@@ -13,7 +13,7 @@
 ![Stylized Docker](./doc/docker_seated-nude_sw375_ss1.png)
 ![Stylized Docker](./doc/docker_starryNight_sw1500_ss1.png)
 
-A dockerized version of the [neural style algorithm by jcjohnson](https://github.com/jcjohnson/neural-style), with a simple flask server to produce images. [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is used to make use of GPU hardware if available.
+A dockerized version of the [neural style algorithm by jcjohnson](https://github.com/jcjohnson/neural-style). [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is used to make use of GPU hardware.
 
 ## Install
 
