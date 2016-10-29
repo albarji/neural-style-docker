@@ -36,11 +36,7 @@ RUN set -ex && \
 	rm ~/miniconda.sh
 ENV PATH /opt/conda/bin:$PATH
 
-# Install python dependencies
-RUN conda install scikit-image
-RUN pip install connexion
-
-COPY ["server", "/scripts/variants.py", "/scripts/neural-style.sh", "/neural-style/"]
+COPY ["/scripts/variants.py", "/scripts/neural-style.sh", "/neural-style/"]
 
 # Add neural-style to path
 ENV PATH /neural-style:$PATH

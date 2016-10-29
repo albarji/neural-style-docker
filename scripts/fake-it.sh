@@ -20,7 +20,7 @@ if groups $USER | grep &>/dev/null '\bdocker\b'; then SU=""
 else SU="sudo"; fi
 
 output_name="output/${1%.*}_by_${2%.*}.png"
-time $SU nvidia-docker run --rm -v $(pwd):/images lherrera/neural-style -backend cudnn -cudnn_autotune -normalize_gradients -init image -content_weight 100 -style_weight 1500 -content_image contents/$1 -style_image styles/$2 -output_image $output_name
+time $SU nvidia-docker run --rm -v $(pwd):/images albarji/neural-style -backend cudnn -cudnn_autotune -normalize_gradients -init image -content_weight 100 -style_weight 1500 -content_image contents/$1 -style_image styles/$2 -output_image $output_name
 
 
 

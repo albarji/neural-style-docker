@@ -17,27 +17,47 @@ A dockerized version of the [neural style algorithm by jcjohnson](https://github
 
 ## Install
 
-Prerequisites
+### Prerequisites
 
 * [docker](https://www.docker.com/)
 * [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
 * Appropriate nvidia drivers for your GPU
 
-Once this is met you can build the image with
+### Installation
 
-	nvidia-docker build -t neural-style .
+You can either pull the Docker image from Docker Hub with
 
-## Use as command
+	docker pull albarji/neural-style
+
+or build the image locally with
+
+	make
+
+## Simple use
+
+Just run
+
+	bash scripts/fake-it.sh
+
+This applies a blend of content and style with some default parameters. Both content and style images must be present in the "contents" and "styles" folders, respectively.
+
+Example: to draw the Golden Gate bridge the style of Van Gogh's Starry Night, type
+
+	bash scripts/fake-it.sh goldengate.jpg vangogh.jpg
+
+## Advanced use
+
+### Use as the neural-style command
 
 You can invoke the neural-style command by simply running a container of this image, for example:
 
-	nvidia-docker run --rm neural-style -h
+	nvidia-docker run --rm albarji/neural-style -h
 
 produces the usage help.
 
 To apply the neural-style method on some host images, map the host folder with such images to the container /images folder through a volume such as
 
-	nvidia-docker run --rm -v $(pwd):/images neural-style -backend cudnn -cudnn_autotune -content_image content.png -style_image style.png
+	nvidia-docker run --rm -v $(pwd):/images albarji/neural-style -backend cudnn -cudnn_autotune -content_image content.png -style_image style.png
 
 The container uses as work directory the /images folder, so the results will be readily available at the mounted host folder.
 
@@ -45,26 +65,18 @@ In order to take full advantage of the cudnn libraries (also included in the ima
 
 As an example, let's redraw Docker's logo in the famous style of Van Gogh's Starry Night:
 
-	nvidia-docker run --rm -v $(pwd):/images neural-style -backend cudnn -cudnn_autotune -content_image doc/docker.png -style_image doc/starryNight.jpg
+	nvidia-docker run --rm -v $(pwd):/images albarji/neural-style -backend cudnn -cudnn_autotune -content_image contents/docker.png -style_image styles/vangogh.jpg
 
 ### Generating variants
 
 Running the command 
 
-	nvidia-docker run --rm --entrypoint python neural-style /neural-style/variants.py
+	nvidia-docker run --rm --entrypoint python albarji/neural-style /neural-style/variants.py
 
-will generate several variants of the same image blends, for different neural-style parameters that work well in general. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
+will generate several variants of the same image blends, for different albarji/neural-style parameters that work well in general. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
 
 For example, to generate different variants of Docker logo + Starry Night:
 
-	nvidia-docker run --rm -v $(pwd):/images --entrypoint python neural-style /neural-style/variants.py --contents doc/docker.png --styles doc/starryNight.jpg --outfolder .
+	nvidia-docker run --rm -v $(pwd):/images --entrypoint python albarji/neural-style /neural-style/variants.py --contents contents/docker.png --styles styles/vangogh.jpg --outfolder .
 
-	
-## Use as server
-
-You can also deploy neural-style as an API REST server, running
-
-	nvidia-docker run -d -p 80:80 --entrypoint "python" neural-style /neural-style/app.py
-
-and you will get a server listening to localhost:80. Docs on API usage are available at http://localhost:80/v1/ui/ . This server only supports basic parameters, so the command method above should be preferred.
 
