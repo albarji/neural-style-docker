@@ -47,9 +47,21 @@ Example: to draw the Golden Gate bridge the style of Van Gogh's Starry Night, ty
 
 ## Advanced use
 
+### Generating variants
+
+Running the command script
+
+	bash scripts/variants.sh
+
+will generate several variants of the same image blends, for different neural-style parameters that work well in general. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
+
+For example, to generate different variants of Docker logo + Starry Night:
+
+	bash scripts/variants.sh --contents contents/docker.png --styles styles/vangogh.jpg
+
 ### Use as the neural-style command
 
-You can invoke the neural-style command by simply running a container of this image, for example:
+You can directly invoke the core neural-style algorithm by simply running a container of this image, for example:
 
 	nvidia-docker run --rm albarji/neural-style -h
 
@@ -66,17 +78,5 @@ In order to take full advantage of the cudnn libraries (also included in the ima
 As an example, let's redraw Docker's logo in the famous style of Van Gogh's Starry Night:
 
 	nvidia-docker run --rm -v $(pwd):/images albarji/neural-style -backend cudnn -cudnn_autotune -content_image contents/docker.png -style_image styles/vangogh.jpg
-
-### Generating variants
-
-Running the command 
-
-	nvidia-docker run --rm --entrypoint python albarji/neural-style /neural-style/variants.py
-
-will generate several variants of the same image blends, for different albarji/neural-style parameters that work well in general. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
-
-For example, to generate different variants of Docker logo + Starry Night:
-
-	nvidia-docker run --rm -v $(pwd):/images --entrypoint python albarji/neural-style /neural-style/variants.py --contents contents/docker.png --styles styles/vangogh.jpg --outfolder .
 
 

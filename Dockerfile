@@ -28,15 +28,7 @@ RUN mkdir /models
 # Declare volume for storing network weights
 VOLUME ["/neural-style/models"]
 
-# Install python miniconda
-RUN set -ex && \
-	echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.0.5-Linux-x86_64.sh -O ~/miniconda.sh && \
-    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
-	rm ~/miniconda.sh
-ENV PATH /opt/conda/bin:$PATH
-
-COPY ["/scripts/variants.py", "/scripts/neural-style.sh", "/neural-style/"]
+COPY ["/scripts/variants.sh", "/scripts/neural-style.sh", "/neural-style/"]
 
 # Add neural-style to path
 ENV PATH /neural-style:$PATH
