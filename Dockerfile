@@ -19,15 +19,16 @@ RUN set -ex && \
 	tar -xvzf master.tar.gz && \
     mv neural-style-master neural-style && \
 	rm master.tar.gz
-WORKDIR neural-style
 
 # Download precomputed network weights
+WORKDIR neural-style
 RUN bash models/download_models.sh
 RUN mkdir /models
 
 # Declare volume for storing network weights
 VOLUME ["/neural-style/models"]
 
+# Copy wrapper scripts
 COPY ["/scripts/variants.sh", "/scripts/neural-style.sh", "/neural-style/"]
 
 # Add neural-style to path
@@ -36,9 +37,6 @@ ENV PATH /neural-style:$PATH
 # Prepare folder for mounting images and workplaces
 WORKDIR /images
 VOLUME ["/images"]
-
-# Expose API ports
-EXPOSE 80
 
 ENTRYPOINT ["neural-style.sh"]
 CMD ["-backend", "cudnn", "-cudnn_autotune"]
