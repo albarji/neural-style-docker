@@ -42,9 +42,6 @@ WORKDIR neural-style
 RUN bash models/download_models.sh
 RUN mkdir /models
 
-# Declare volume for storing network weights
-VOLUME ["/neural-style/models"]
-
 # Copy wrapper scripts
 COPY ["/scripts/variants.sh", "/scripts/neural-style.sh", "/neural-style/"]
 
