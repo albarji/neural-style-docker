@@ -13,7 +13,8 @@
 ![Stylized Docker](./doc/docker_seated-nude_sw375_ss1.png)
 ![Stylized Docker](./doc/docker_starryNight_sw1500_ss1.png)
 
-A dockerized version of the [neural style algorithm by jcjohnson](https://github.com/jcjohnson/neural-style). [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is used to make use of GPU hardware.
+A dockerized version of neural style transfer algorithms.
+[nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is used to make use of GPU hardware.
 
 ## Install
 
@@ -33,50 +34,87 @@ or build the image locally with
 
 	make
 
-## Simple use
+### Usage
 
-Just run
+This docker container operates by receiving images through a volume to be mounted at the **/images** directory.
+For instance, to apply a **style** image *somestyle.png* onto a **content** image *somecontent.png* located at the 
+current directory, run: 
 
-	bash scripts/fake-it.sh
+    nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content somecontent.png --style somestyle.png
 
-This applies a blend of content and style with some default parameters. Both content and style images must be present in the "contents" and "styles" folders, respectively.
+All paths referenced in the arguments are regarded as relative to the /images folder within the container. So in case
+of having a local structure such as
 
-Example: to draw the Golden Gate bridge the style of Van Gogh's Starry Night, type
+    contents/
+        docker.png
+        whatever.jpg
+    styles/
+        picasso.png
+        vangogh.png
+        
+applying the *vangogh.png* style to the *docker.png* image amounts to
 
-	bash scripts/fake-it.sh goldengate.jpg vangogh.jpg
+    nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png
+    
+You can provide several content and style images, in which case all cross-combinations will be generated.
 
-## Advanced use
+    nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png contents/whatever.jpg --style styles/vangogh.png styles/picasso.png
 
-### Generating variants
+### Fine tuning the results
 
-Running the command script
+Better results can be attained by modifying some of the transfer parameters.
 
-	bash scripts/variants.sh
+#### Algorithm
 
-will generate several variants of the same image blends, for different neural-style parameters that work well in general. This is useful for producing several versions of the same blend and afterwards hand-picking the best one. Run this command with the -h option to obtain usage help.
+The --alg parameter allows changing the neural style transfer algorithm to use.
 
-For example, to generate different variants of Docker logo + Starry Night:
+* **gatys**: highly detailed transfer, slow processing times (default)
+* **chen-schmidt**: fast patch-based style transfer
+* **chen-schmidt-inverse**: even faster aproximation to chen-schmidt through the use of an inverse network
 
-	bash scripts/variants.sh --contents contents/docker.png --styles styles/vangogh.jpg
+The following example illustrates kind of results to be expected by these different algorithms
 
-### Use as the neural-style command
+| Content image | Algorithm | Style image |
+| ------------- | --------- | ----------- |
+| ![Content](./doc/avila-walls.jpg) | Gatys ![Gatys](./doc/avila-walls_broca_gatys_ss1.0_sw10.0.jpg) | ![Style](./doc/broca.jpg) | 
+| ![Content](./doc/avila-walls.jpg) | Chen-Schmidt ![Chen-Schmidt](./doc/avila-walls_broca_chen-schmidt_ss1.0.jpg) | ![Style](./doc/broca.jpg) | 
+| ![Content](./doc/avila-walls.jpg) | Chen-Schmidt Inverse ![Chen-Schmidt Inverse](./doc/avila-walls_broca_chen-schmidt-inverse_ss1.0.jpg) | ![Style](./doc/broca.jpg) | 
 
-You can directly invoke the core neural-style algorithm by simply running a container of this image, for example:
+#### Output image size
 
-	nvidia-docker run --rm albarji/neural-style -h
+By defaul the output image will have the same size as the input content image, but a different target size can be
+specified through the --size parameter. For example, to produce a 512 image
 
-produces the usage help.
+    nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png --size 512
+    
+Note the proportions of the image are maintained, therefore the value of the size parameter is understood as the width 
+of the target image, the height being scaled accordingly to keep proportion.  
 
-To apply the neural-style method on some host images, map the host folder with such images to the container /images folder through a volume such as
+#### Style weight
 
-	nvidia-docker run --rm -v $(pwd):/images albarji/neural-style -backend cudnn -cudnn_autotune -content_image content.png -style_image style.png
+Gatys algorithm allows to adjust the amount of style imposed over the content image, by means of the --sw parameter.
+By default a value of **10** is used, meaning the importance of the style is 10 times the importance of the content.
+Smaller weight values result in the transfer of colors, while higher values transfer textures and details of the style
 
-The container uses as work directory the /images folder, so the results will be readily available at the mounted host folder.
+If several weight values can be provided, all combinations will be generated. For instance, to generate the same
+style transfer with three different weights, use
 
-In order to take full advantage of the cudnn libraries (also included in the image) the options -backend cudnn -cudnn_autotune are always recommended.
+    nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png --sw 5 10 20
+ 
+#### Style scale
 
-As an example, let's redraw Docker's logo in the famous style of Van Gogh's Starry Night:
+If the transferred style results in too large or too small features, the scaling can be modified through the --ss 
+parameter. A value of **1** keeps the style at its original scale. Smaller values reduce the scale of the style,
+resulting in smaller style features in the output image. Conversely, larger values produce larger features. 
+Similarly to the style weight, several values can be provided
 
-	nvidia-docker run --rm -v $(pwd):/images albarji/neural-style -backend cudnn -cudnn_autotune -content_image contents/docker.png -style_image styles/vangogh.jpg
+    nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png --ss 0.75 1 1.25
+    
+Warning: using a value larger than **1** will increasy the memory consumption. 
 
+## References
 
+* [Gatys et al method](https://arxiv.org/abs/1508.06576), [implementation by jcjohnson](https://github.com/jcjohnson/neural-style)
+* [Chen-Schmidt method](https://arxiv.org/pdf/1612.04337.pdf), [implementation](https://github.com/rtqichen/style-swap)
+* [A review on style transfer methods](https://arxiv.org/pdf/1705.04058.pdf)
+* [Neural-tiling method](https://github.com/ProGamerGov/Neural-Tile)
