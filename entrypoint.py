@@ -22,7 +22,7 @@ neural-style-docker: artistic style between images
         chen-schmidt            Fast patch-based style transfer
         chen-schmidt-inverse    Even faster aproximation to chen-schmidt through the use of an inverse network
     --tilesize TILE_SIZE: maximum size of each tile in the style transfer.
-        If your GPU runs out of memory you should try reducing this value. Default: 512
+        If your GPU runs out of memory you should try reducing this value. Default: 400
 
     Additionally provided parameters are carried on to the underlying algorithm.
     
@@ -41,6 +41,7 @@ def main(argv=None):
         alg = "gatys"
         weights = None
         stylescales = None
+        tilesize = None
         otherparams = []
 
         # Gather parameters
@@ -48,10 +49,10 @@ def main(argv=None):
         while i < len(argv):
             # References to inputs/outputs are re-referenced to the mounted /images directory
             if argv[i] == "--content":
-                contents = ["/images/" + x for x in sublist(argv[i+1:], stopper="--")]
+                contents = ["/images/" + x for x in sublist(argv[i+1:], stopper="-")]
                 i += len(contents) + 1
             elif argv[i] == "--style":
-                styles = ["/images/" + x for x in sublist(argv[i+1:], stopper="--")]
+                styles = ["/images/" + x for x in sublist(argv[i+1:], stopper="-")]
                 i += len(styles) + 1
             # Other general parameters
             elif argv[i] == "--output":
@@ -64,11 +65,14 @@ def main(argv=None):
                 size = int(argv[i+1])
                 i += 2
             elif argv[i] == "--sw":
-                weights = [float(x) for x in sublist(argv[i+1:], stopper="--")]
+                weights = [float(x) for x in sublist(argv[i+1:], stopper="-")]
                 i += len(weights) + 1
             elif argv[i] == "--ss":
-                stylescales = [float(x) for x in sublist(argv[i+1:], stopper="--")]
+                stylescales = [float(x) for x in sublist(argv[i+1:], stopper="-")]
                 i += len(stylescales) + 1
+            elif argv[i] == "--tilesize":
+                tilesize = argv[i+1]
+                i += 2
             # Help
             elif argv[i] == "--help":
                 print(HELP)
@@ -90,7 +94,7 @@ def main(argv=None):
         LOGGER.info("\tAlgorithm = %s" % alg)
         LOGGER.info("\tStyle weights = %s" % str(weights))
         LOGGER.info("\tStyle scales = %s" % str(stylescales))
-        styletransfer(contents, styles, savefolder, size, alg, weights, stylescales, *otherparams)
+        styletransfer(contents, styles, savefolder, size, alg, weights, stylescales, tilesize, algparams=otherparams)
         return 1
 
     except Exception:

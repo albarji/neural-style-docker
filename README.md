@@ -82,13 +82,25 @@ The following example illustrates kind of results to be expected by these differ
 
 #### Output image size
 
-By defaul the output image will have the same size as the input content image, but a different target size can be
+By default the output image will have the same size as the input content image, but a different target size can be
 specified through the --size parameter. For example, to produce a 512 image
 
     nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png --size 512
     
 Note the proportions of the image are maintained, therefore the value of the size parameter is understood as the width 
-of the target image, the height being scaled accordingly to keep proportion.  
+of the target image, the height being scaled accordingly to keep proportion.
+
+If the image to be generated is large, a tiling strategy will be used, applying the neural style transfer method
+to small tiles of the image and stitching them together. Tiles overlap to provide some guarantees on overall
+consistency.
+
+![Tiling](./doc/tiling.png)
+
+You can control the size of these tiles through the --tilesize parameter.
+Higher values will generally produce better quality results and faster rendering times, but they will also incur in
+larger memory consumption.
+Note also that since the full style image is applied to each tile, as a result the style features will appear
+as smaller in the rendered image.
 
 #### Style weight
 
@@ -112,9 +124,15 @@ Similarly to the style weight, several values can be provided
     
 Warning: using a value larger than **1** will increasy the memory consumption. 
 
+### Transparency
+
+Transparency values (alpha channels) are preserved by the neural style transfer. Note for instance how in the Wikipedia
+logo example above the transparent background is not transformed.
+
 ## References
 
 * [Gatys et al method](https://arxiv.org/abs/1508.06576), [implementation by jcjohnson](https://github.com/jcjohnson/neural-style)
 * [Chen-Schmidt method](https://arxiv.org/pdf/1612.04337.pdf), [implementation](https://github.com/rtqichen/style-swap)
 * [A review on style transfer methods](https://arxiv.org/pdf/1705.04058.pdf)
 * [Neural-tiling method](https://github.com/ProGamerGov/Neural-Tile)
+* [The Wikipedia logo](https://en.wikipedia.org/wiki/Wikipedia_logo)
