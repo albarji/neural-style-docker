@@ -18,40 +18,49 @@ RUN git clone https://github.com/torch/distro.git /root/torch --recursive && cd 
 RUN cd /root/torch && ./install.sh
 RUN ln -s /root/torch/install/bin/* /usr/local/bin
 
-# Torch environment variables
-ENV LUA_PATH='/root/.luarocks/share/lua/5.1/?.lua;/root/.luarocks/share/lua/5.1/?/init.lua;/root/torch/install/share/lua/5.1/?.lua;/root/torch/install/share/lua/5.1/?/init.lua;./?.lua;/root/torch/install/share/luajit-2.1.0-beta1/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua'
-ENV LUA_CPATH='/root/.luarocks/lib/lua/5.1/?.so;/root/torch/install/lib/lua/5.1/?.so;./?.so;/usr/local/lib/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so'
-ENV PATH=/root/torch/install/bin:$PATH
-ENV LD_LIBRARY_PATH=/root/torch/install/lib:$LD_LIBRARY_PATH
-ENV DYLD_LIBRARY_PATH=/root/torch/install/lib:$DYLD_LIBRARY_PATH
-ENV LUA_CPATH='/root/torch/install/lib/?.so;'$LUA_CPATH
+# Install additional necessary torch dependencies
+RUN luarocks install loadcaffe && \
+    luarocks install autograd
 
-# Install loadcaffe and other torch dependencies
-RUN luarocks install loadcaffe
+# Install Python miniconda3 + requirements
+ENV MINICONDA_HOME="/opt/miniconda"
+ENV PATH="${MINICONDA_HOME}/bin:${PATH}"
+RUN curl -o Miniconda3-latest-Linux-x86_64.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+  && chmod +x Miniconda3-latest-Linux-x86_64.sh \
+  && ./Miniconda3-latest-Linux-x86_64.sh -b -p "${MINICONDA_HOME}" \
+&& rm Miniconda3-latest-Linux-x86_64.sh
 
 # Clone neural-style app
-WORKDIR /
+WORKDIR /app
 RUN set -ex && \
 	wget --no-check-certificate https://github.com/jcjohnson/neural-style/archive/master.tar.gz && \
 	tar -xvzf master.tar.gz && \
     mv neural-style-master neural-style && \
 	rm master.tar.gz
 
-# Download precomputed network weights
-WORKDIR neural-style
+# Download precomputed VGG network weights
+WORKDIR /app/neural-style
 RUN bash models/download_models.sh
-RUN mkdir /models
-
-# Copy wrapper scripts
-COPY ["/scripts/variants.sh", "/scripts/neural-style.sh", "/neural-style/"]
 
 # Add neural-style to path
-ENV PATH /neural-style:$PATH
+ENV PATH /app/neural-style:$PATH
 
-# Prepare folder for mounting images and workplaces
-WORKDIR /images
-VOLUME ["/images"]
+# Clone style-swap app
+WORKDIR /app
+RUN set -ex && \
+	wget --no-check-certificate https://github.com/rtqichen/style-swap/archive/master.tar.gz && \
+	tar -xvzf master.tar.gz && \
+    mv style-swap-master style-swap && \
+	rm master.tar.gz
+# Link precomputed VGG network weights
+RUN rm -rf /app/style-swap/models
+RUN ln -s /app/neural-style/models /app/style-swap/models
+# Add precomputed inverse network model
+ADD models/dec-tconv-sigmoid.t7 /app/style-swap/models/dec-tconv-sigmoid.t7
 
-ENTRYPOINT ["neural-style.sh"]
-CMD ["-backend", "cudnn", "-cudnn_autotune"]
+# Copy wrapper scripts
+COPY ["entrypoint.py" ,"/app/entrypoint/"]
+COPY ["/neuralstyle/*.py", "/app/entrypoint/neuralstyle/"]
+
+ENTRYPOINT ["python", "/app/entrypoint/entrypoint.py"]
 
