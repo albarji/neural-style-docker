@@ -3,9 +3,8 @@
 #
 from tempfile import TemporaryDirectory
 from glob import glob
-import filecmp
-from neuralstyle.algorithms import styletransfer, ALGORITHMS
-from neuralstyle.imagemagick import shape
+from neuralstyle.algorithms import styletransfer, neuraltile, ALGORITHMS
+from neuralstyle.imagemagick import shape, equalimages
 from neuralstyle.utils import filename
 
 CONTENTS = "/app/entrypoint/tests/contents/"
@@ -16,6 +15,14 @@ def test_styletransfer_gatys():
     """Style transfer works without error for the Gatys algorithm"""
     tmpdir = TemporaryDirectory()
     styletransfer([CONTENTS + "dockersmall.png"], [STYLES + "cubism.jpg"], tmpdir.name, alg="gatys")
+    assert len(glob(tmpdir.name + "/dockersmall*cubism*")) == 1
+
+
+def test_styletransfer_gatys_parameters():
+    """Algorithm parameters can be passed to the Gatys method"""
+    tmpdir = TemporaryDirectory()
+    algparams = ("-num_iterations", "50")
+    styletransfer([CONTENTS + "dockersmall.png"], [STYLES + "cubism.jpg"], tmpdir.name, algparams=algparams)
     assert len(glob(tmpdir.name + "/dockersmall*cubism*")) == 1
 
 
@@ -76,7 +83,7 @@ def test_styletransfer_ss():
         # Check correct number of generated images, and that they are different
         assert len(files) == len(stylescales)
         for f1, f2 in zip(files, files[1:]):
-            assert not filecmp.cmp(f1, f2, shallow=False)
+            assert not equalimages(f1, f2)
 
 
 def test_styletransfer_sw():
@@ -91,4 +98,13 @@ def test_styletransfer_sw():
     # Check correct number of generated images, and that they are different
     assert len(files) == len(styleweights)
     for f1, f2 in zip(files, files[1:]):
-        assert not filecmp.cmp(f1, f2, shallow=False)
+        assert not equalimages(f1, f2)
+
+
+def test_neuraltile():
+    """The neural tiling procedure can be run without issues"""
+    tmpdir = TemporaryDirectory()
+    content = CONTENTS + "avila-walls.jpg"
+    outfile = tmpdir.name + "/tiled.png"
+    neuraltile(content, STYLES + "cubism.jpg", outfile, alg="chen-schmidt-inverse", maxtilesize=400)
+    assert shape(outfile) == shape(content)
