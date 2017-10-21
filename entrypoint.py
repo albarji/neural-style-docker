@@ -71,7 +71,7 @@ def main(argv=None):
                 stylescales = [float(x) for x in sublist(argv[i+1:], stopper="-")]
                 i += len(stylescales) + 1
             elif argv[i] == "--tilesize":
-                tilesize = argv[i+1]
+                tilesize = int(argv[i+1])
                 i += 2
             # Help
             elif argv[i] == "--help":

@@ -3,10 +3,10 @@ from os.path import basename, splitext
 
 
 def sublist(lst, stopper):
-    """Reads a list of elements until a stopper value is found"""
+    """Reads a list of strings until a stopper value is found at the beginning of a string"""
     gathered = []
     for item in lst:
-        if stopper in item:
+        if item.startswith(stopper):
             break
         gathered.append(item)
     return gathered
