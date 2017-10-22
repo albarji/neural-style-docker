@@ -12,11 +12,13 @@ def test_sublist():
         (["bla", "--someoption"], ["bla"]),
         (["--someoption"], []),
         (["bla"], ["bla"]),
-        ([], [])
+        ([], []),
+        (["a", "b", "-values"], ["a", "b"]),
+        (["a", "file-b", "-values"], ["a", "file-b"]),
     ]
 
     for lst, expected in tests:
-        result = sublist(lst, stopper="--")
+        result = sublist(lst, stopper="-")
         print("Input", lst)
         print("Expected", expected)
         print("Output", result)
