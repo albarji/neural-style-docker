@@ -108,3 +108,19 @@ def test_neuraltile():
     outfile = tmpdir.name + "/tiled.png"
     neuraltile(content, STYLES + "cubism.jpg", outfile, alg="chen-schmidt-inverse", maxtilesize=400)
     assert shape(outfile) == shape(content)
+
+
+def test_formattga():
+    """TGA format images can be processed correctly"""
+    contents = [CONTENTS + f for f in ["tgasample.tga", "marbles.tga"]]
+    tmpdir = TemporaryDirectory()
+    styletransfer(contents, [STYLES + "cubism.jpg"], tmpdir.name, alg="chen-schmidt-inverse")
+    assert len(glob(tmpdir.name + "/*cubism*")) == 2
+
+
+def test_formatpsd():
+    """PSD format images can be processed correctly"""
+    contents = [CONTENTS + f for f in ["oldtelephone.psd"]]
+    tmpdir = TemporaryDirectory()
+    styletransfer(contents, [STYLES + "cubism.jpg"], tmpdir.name, alg="chen-schmidt-inverse")
+    assert len(glob(tmpdir.name + "/*cubism*")) == 1

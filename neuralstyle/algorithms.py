@@ -85,17 +85,21 @@ def styletransfer_single(content, style, outfile, size=None, alg="gatys", weight
     """General style transfer routine over a single set of options"""
     workdir = TemporaryDirectory()
 
-    # Cut out alpha channel
-    rgbfile = workdir.name + "rgb.png"
-    alphafile = workdir.name + "alpha.png"
+    # Cut out alpha channel from content
+    rgbfile = workdir.name + "/" + "rgb.png"
+    alphafile = workdir.name + "/" + "alpha.png"
     extractalpha(content, rgbfile, alphafile)
 
+    # Transform style to png, as some algorithms don't understand other formats
+    stylepng = workdir.name + "/" + "style.png"
+    convert(style, stylepng)
+
     # Call style transfer algorithm
-    algfile = workdir.name + "algoutput.png"
+    algfile = workdir.name + "/" + "algoutput.png"
     if alg == "gatys":
-        gatys(rgbfile, style, algfile, size, weight, stylescale, algparams)
+        gatys(rgbfile, stylepng, algfile, size, weight, stylescale, algparams)
     elif alg in ["chen-schmidt", "chen-schmidt-inverse"]:
-        chenschmidt(alg, rgbfile, style, algfile, size, stylescale, algparams)
+        chenschmidt(alg, rgbfile, stylepng, algfile, size, stylescale, algparams)
     # Enforce correct size
     correctshape(algfile, content, size)
 
@@ -118,9 +122,9 @@ def neuraltile(content, style, outfile, size=None, maxtilesize=400, overlap=50, 
     # Compute number of tiles required to map all the image
     xtiles, ytiles = tilegeometry(fullshape, maxtilesize, overlap)
 
-    # First scale image to target resolution. Also transform to PNG to avoid alpha channel operations
+    # First scale image to target resolution
     firstpass = workdir.name + "/" + "lowres.png"
-    copyfile(content, firstpass)
+    convert(content, firstpass)
     resize(firstpass, fullshape)
 
     # Chop the styled image into tiles with the specified overlap value.
