@@ -1,18 +1,28 @@
 # Convenience functions to perform Image Magicks
 from subprocess import run, PIPE
 from glob import glob
+from tempfile import TemporaryDirectory
 from neuralstyle.utils import filename
 
 
 def convert(origin, dest):
-    """Transforms the format of an image in a file, by creating a new file with the new format"""
-    command = "convert " + origin + " " + dest
+    """Transforms the format of an image in a file, by creating a new file with the new format
+
+    If the input file has several layers, they are flattened.
+    """
+    command = "convert " + origin + " -flatten " + dest
     run(command, shell=True)
 
 
 def shape(imfile):
-    """Returns the shape of an image file"""
-    result = run("convert " + imfile + ' -format "%w %h" info:', shell=True, check=True, stdout=PIPE)
+    """Returns the shape of an image file
+
+    If the input file has several layers, it is flattened before computing the shape.
+    """
+    tmpdir = TemporaryDirectory()
+    tmpname = tmpdir.name + "/" + "image.png"
+    convert(imfile, tmpname)
+    result = run("convert " + tmpname + ' -format "%w %h" info:', shell=True, check=True, stdout=PIPE)
     return [int(x) for x in result.stdout.decode("utf-8").split(" ")]
 
 

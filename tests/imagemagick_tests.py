@@ -3,7 +3,8 @@
 #
 from tempfile import TemporaryDirectory
 from shutil import copyfile
-from neuralstyle.imagemagick import shape, resize, choptiles, feather, extractalpha, mergealpha, equalimages
+from glob import glob
+from neuralstyle.imagemagick import shape, resize, choptiles, feather, extractalpha, mergealpha, equalimages, convert
 from neuralstyle.utils import filename
 
 CONTENTS = "/app/entrypoint/tests/contents/"
@@ -33,6 +34,28 @@ def test_shape():
         print("Expected", expected)
         print("Output", result)
         assert result == expected
+
+
+def test_convert_nolayers():
+    """Convert a single image with no layers works as expected"""
+    for content in [CONTENTS + f for f in ["docker.png", "goldengate.jpg"]]:
+        for ext in [".png", ".jpg", ".psd", ".tga"]:
+            tmpdir = TemporaryDirectory()
+            outname = tmpdir.name + "/" + "output" + ext
+            convert(content, outname)
+            assert len(glob(tmpdir.name + "/" + filename(outname) + ext)) == 1
+            assert shape(outname) == shape(content)
+
+
+def test_convert_layers():
+    """Convert a single image with layers works as expected"""
+    for content in [CONTENTS + f for f in ["oldtelephone.psd"]]:
+        for ext in [".png", ".jpg", ".psd", ".tga"]:
+            tmpdir = TemporaryDirectory()
+            outname = tmpdir.name + "/" + "output" + ext
+            convert(content, outname)
+            assert len(glob(tmpdir.name + "/" + filename(outname) + ext)) == 1
+            assert shape(outname) == shape(content)
 
 
 def test_resize_keepproportions():
