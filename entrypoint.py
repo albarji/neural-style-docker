@@ -15,7 +15,7 @@ neural-style-docker: artistic style between images
     --style STYLE_IMAGES: file or files with the styles to transfer
     --output OUTPUT_FOLDER: name of the output folder in which to save results
     --size SIZE: size of the output image. Default: content image size
-    --sw STYLE_WEIGHT (default 10): weight or list of weights of the style over the content, in range (0, inf)
+    --sw STYLE_WEIGHT (default 5): weight or list of weights of the style over the content, in range (0, inf)
     --ss STYLE_SCALE (default 1.0): scaling or list of scaling factors for the style images
     --alg ALGORITHM: style-transfer algorithm to use. Must be one of the following:
         gatys                   Highly detailed transfer, slow processing times (default)
@@ -23,6 +23,7 @@ neural-style-docker: artistic style between images
         chen-schmidt-inverse    Even faster aproximation to chen-schmidt through the use of an inverse network
     --tilesize TILE_SIZE: maximum size of each tile in the style transfer.
         If your GPU runs out of memory you should try reducing this value. Default: 400
+    --tileoverlap TILE_OVERLAP: overlap of tiles in the style transfer, measured in pixels. Default: 100
 
     Additionally provided parameters are carried on to the underlying algorithm.
     
@@ -42,6 +43,7 @@ def main(argv=None):
         weights = None
         stylescales = None
         tilesize = None
+        tileoverlap = None
         otherparams = []
 
         # Gather parameters
@@ -56,7 +58,7 @@ def main(argv=None):
                 i += len(styles) + 1
             # Other general parameters
             elif argv[i] == "--output":
-                savefolder = argv[i+1]
+                savefolder = "/images/" + argv[i+1]
                 i += 2
             elif argv[i] == "--alg":
                 alg = argv[i+1]
@@ -72,6 +74,9 @@ def main(argv=None):
                 i += len(stylescales) + 1
             elif argv[i] == "--tilesize":
                 tilesize = int(argv[i+1])
+                i += 2
+            elif argv[i] == "--tileoverlap":
+                tileoverlap = int(argv[i+1])
                 i += 2
             # Help
             elif argv[i] == "--help":
@@ -94,7 +99,11 @@ def main(argv=None):
         LOGGER.info("\tAlgorithm = %s" % alg)
         LOGGER.info("\tStyle weights = %s" % str(weights))
         LOGGER.info("\tStyle scales = %s" % str(stylescales))
-        styletransfer(contents, styles, savefolder, size, alg, weights, stylescales, tilesize, algparams=otherparams)
+        LOGGER.info("\tSize = %s" % str(size))
+        LOGGER.info("\tTile size = %s" % str(tilesize))
+        LOGGER.info("\tTile overlap = %s" % str(tileoverlap))
+        styletransfer(contents, styles, savefolder, size, alg, weights, stylescales, tilesize, tileoverlap,
+                      algparams=otherparams)
         return 1
 
     except Exception:

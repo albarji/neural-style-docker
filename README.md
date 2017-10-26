@@ -51,6 +51,8 @@ of having a local structure such as
     styles/
         picasso.png
         vangogh.png
+    results/
+        something.md
         
 applying the *vangogh.png* style to the *docker.png* image amounts to
 
@@ -59,6 +61,14 @@ applying the *vangogh.png* style to the *docker.png* image amounts to
 You can provide several content and style images, in which case all cross-combinations will be generated.
 
     nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png contents/whatever.jpg --style styles/vangogh.png styles/picasso.png
+    
+By default all generated images are saved into the container **/images**. When running the commands above the results
+will get saved into the host local folder (through the mounted volume). If you want to locate the generated images at a 
+different folder you can use the --output parameters. Note that, similarly to the --content and --style arguments,
+the path provided in --output will be regarded as relative to the /images folder. For instance, using the local 
+structure from the example above, saving the generated images in the "results" folder will require the following:
+
+    nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png --output results
 
 ### Fine tuning the results
 
@@ -105,10 +115,11 @@ as smaller in the rendered image.
 #### Style weight
 
 Gatys algorithm allows to adjust the amount of style imposed over the content image, by means of the --sw parameter.
-By default a value of **10** is used, meaning the importance of the style is 10 times the importance of the content.
-Smaller weight values result in the transfer of colors, while higher values transfer textures and details of the style
+By default a value of **5** is used, meaning the importance of the style is 5 times the importance of the content.
+Smaller weight values result in the transfer of colors, while higher values transfer textures and even objects of the 
+style.
 
-If several weight values can be provided, all combinations will be generated. For instance, to generate the same
+If several weight values are provided, all combinations will be generated. For instance, to generate the same
 style transfer with three different weights, use
 
     nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png --sw 5 10 20
