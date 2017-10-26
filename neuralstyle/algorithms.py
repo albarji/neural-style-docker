@@ -25,7 +25,8 @@ ALGORITHMS = {
             "-content_weight", "100",
             "-save_iter", "10000",
             "-proto_file", "/app/neural-style/models/VGG_ILSVRC_19_layers_deploy.prototxt",
-            "-model_file", "/app/neural-style/models/VGG_ILSVRC_19_layers.caffemodel"
+            "-model_file", "/app/neural-style/models/VGG_ILSVRC_19_layers.caffemodel",
+            "-num_iterations", "500"
         ]
     },
     "chen-schmidt": {
@@ -47,7 +48,7 @@ ALGORITHMS = {
 
 
 def styletransfer(contents, styles, savefolder, size=None, alg="gatys", weights=None, stylescales=None,
-                  maxtilesize=400, algparams=None):
+                  maxtilesize=400, tileoverlap=100, algparams=None):
     """General style transfer routine over multiple sets of options"""
     # Check arguments
     if alg not in ALGORITHMS.keys():
@@ -60,11 +61,13 @@ def styletransfer(contents, styles, savefolder, size=None, alg="gatys", weights=
         weights = [None]
     else:
         if weights is None:
-            weights = [10.0]
+            weights = [5.0]
     if stylescales is None:
         stylescales = [1.0]
     if maxtilesize is None:
         maxtilesize = 400
+    if tileoverlap is None:
+        tileoverlap = 100
     if algparams is None:
         algparams = []
 
@@ -77,11 +80,11 @@ def styletransfer(contents, styles, savefolder, size=None, alg="gatys", weights=
                                  stylescale=scale, algparams=algparams)
         # Else use a tiling strategy
         else:
-            neuraltile(content=content, style=style, outfile=outfile, size=size, maxtilesize=maxtilesize, alg=alg,
-                       weight=weight, stylescale=scale, algparams=algparams)
+            neuraltile(content=content, style=style, outfile=outfile, size=size, maxtilesize=maxtilesize,
+                       overlap=tileoverlap, alg=alg, weight=weight, stylescale=scale, algparams=algparams)
 
 
-def styletransfer_single(content, style, outfile, size=None, alg="gatys", weight=10.0, stylescale=1.0, algparams=None):
+def styletransfer_single(content, style, outfile, size=None, alg="gatys", weight=5.0, stylescale=1.0, algparams=None):
     """General style transfer routine over a single set of options"""
     workdir = TemporaryDirectory()
 
@@ -108,7 +111,7 @@ def styletransfer_single(content, style, outfile, size=None, alg="gatys", weight
     mergealpha(algfile, alphafile, outfile)
 
 
-def neuraltile(content, style, outfile, size=None, maxtilesize=400, overlap=50, alg="gatys", weight=10.0,
+def neuraltile(content, style, outfile, size=None, maxtilesize=400, overlap=100, alg="gatys", weight=5.0,
                stylescale=1.0, algparams=None):
     """Strategy to generate a high resolution image by running style transfer on overlapping image tiles"""
     LOGGER.info("Starting tiling strategy")

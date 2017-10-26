@@ -106,7 +106,7 @@ def test_neuraltile():
     tmpdir = TemporaryDirectory()
     content = CONTENTS + "avila-walls.jpg"
     outfile = tmpdir.name + "/tiled.png"
-    neuraltile(content, STYLES + "cubism.jpg", outfile, alg="chen-schmidt-inverse", maxtilesize=400)
+    neuraltile(content, STYLES + "cubism.jpg", outfile, alg="chen-schmidt-inverse", maxtilesize=400, overlap=100)
     assert shape(outfile) == shape(content)
 
 
