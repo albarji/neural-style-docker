@@ -1,28 +1,19 @@
 # Convenience functions to perform Image Magicks
 from subprocess import run, PIPE
 from glob import glob
-from tempfile import TemporaryDirectory
 from neuralstyle.utils import filename
 
 
 def convert(origin, dest):
-    """Transforms the format of an image in a file, by creating a new file with the new format
-
-    If the input file has several layers, they are flattened.
-    """
-    command = "convert " + origin + " -flatten " + dest
-    run(command, shell=True)
+    """Transforms the format of an image in a file, by creating a new file with the new format"""
+    if ismultilayer(origin):
+        raise ValueError("Cannot operate with multilayer images")
+    run("convert %s %s" % (origin, dest), shell=True)
 
 
 def shape(imfile):
-    """Returns the shape of an image file
-
-    If the input file has several layers, it is flattened before computing the shape.
-    """
-    tmpdir = TemporaryDirectory()
-    tmpname = tmpdir.name + "/" + "image.png"
-    convert(imfile, tmpname)
-    result = run("convert " + tmpname + ' -format "%w %h" info:', shell=True, check=True, stdout=PIPE)
+    """Returns the shape of an image file"""
+    result = run("convert " + imfile + ' -format "%w %h" info:', shell=True, check=True, stdout=PIPE)
     return [int(x) for x in result.stdout.decode("utf-8").split(" ")]
 
 
@@ -90,6 +81,8 @@ def composite(imfiles, outname):
 
 def extractalpha(imfile, rgbfile, alphafile):
     """Decomposes an image file into the RGB channels and the alpha channel, saving both as separate image files"""
+    if ismultilayer(imfile):
+        raise ValueError("Cannot operate with multilayer images")
     # Alpha channel extraction
     command = "convert -alpha extract %s %s" % (imfile, alphafile)
     run(command, shell=True, check=True)
@@ -119,3 +112,8 @@ def equalimages(imfile1, imfile2):
     if result.returncode == 2:
         raise IOError("Error while calling imagemagick compare method")
     return result.returncode == 0
+
+
+def ismultilayer(imfile):
+    """Returns whether an image file contains multiple layers"""
+    return len(shape(imfile)) > 2

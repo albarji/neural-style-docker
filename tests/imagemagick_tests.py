@@ -47,17 +47,6 @@ def test_convert_nolayers():
             assert shape(outname) == shape(content)
 
 
-def test_convert_layers():
-    """Convert a single image with layers works as expected"""
-    for content in [CONTENTS + f for f in ["oldtelephone.psd"]]:
-        for ext in [".png", ".jpg", ".psd", ".tga"]:
-            tmpdir = TemporaryDirectory()
-            outname = tmpdir.name + "/" + "output" + ext
-            convert(content, outname)
-            assert len(glob(tmpdir.name + "/" + filename(outname) + ext)) == 1
-            assert shape(outname) == shape(content)
-
-
 def test_resize_keepproportions():
     """Resizing an image without changing proportions works correctly"""
     tmpdir = TemporaryDirectory()
