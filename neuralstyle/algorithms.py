@@ -5,6 +5,9 @@ from tempfile import TemporaryDirectory, NamedTemporaryFile
 from shutil import copyfile
 import logging
 from math import ceil
+import numpy as np
+import json
+import GPUtil
 from neuralstyle.utils import filename, fileext
 from neuralstyle.imagemagick import (convert, resize, shape, assertshape, choptiles, feather, smush, composite,
                                      extractalpha, mergealpha)
@@ -29,6 +32,7 @@ ALGORITHMS = {
             "-num_iterations", "500"
         ]
     },
+    "gatys-multiresolution": {},
     "chen-schmidt": {
         "folder": "/app/style-swap",
         "command": "th style-swap.lua",
@@ -46,16 +50,20 @@ ALGORITHMS = {
     }
 }
 
+# Load file with GPU configuration
+with open("gpuconfig.json", "r") as f:
+    GPUCONFIG = json.load(f)
+
 
 def styletransfer(contents, styles, savefolder, size=None, alg="gatys", weights=None, stylescales=None,
-                  maxtilesize=400, tileoverlap=100, algparams=None):
+                  tileoverlap=100, algparams=None):
     """General style transfer routine over multiple sets of options"""
     # Check arguments
     if alg not in ALGORITHMS.keys():
         raise ValueError("Unrecognized algorithm %s, must be one of %s" % (alg, str(list(ALGORITHMS.keys()))))
 
     # Plug default options
-    if alg != "gatys":
+    if alg != "gatys" and alg != "gatys-multiresolution":
         if weights is not None:
             LOGGER.warning("Only gatys algorithm accepts style weights. Ignoring style weight parameters")
         weights = [None]
@@ -64,8 +72,6 @@ def styletransfer(contents, styles, savefolder, size=None, alg="gatys", weights=
             weights = [5.0]
     if stylescales is None:
         stylescales = [1.0]
-    if maxtilesize is None:
-        maxtilesize = 400
     if tileoverlap is None:
         tileoverlap = 100
     if algparams is None:
@@ -75,13 +81,13 @@ def styletransfer(contents, styles, savefolder, size=None, alg="gatys", weights=
     for content, style, weight, scale in product(contents, styles, weights, stylescales):
         outfile = outname(savefolder, content, style, alg, scale, weight)
         # If the desired size is smaller than the maximum tile size, use a direct neural style
-        if fitsingletile(targetshape(content, size), maxtilesize):
+        if fitsingletile(targetshape(content, size), alg):
             styletransfer_single(content=content, style=style, outfile=outfile, size=size, alg=alg, weight=weight,
                                  stylescale=scale, algparams=algparams)
         # Else use a tiling strategy
         else:
-            neuraltile(content=content, style=style, outfile=outfile, size=size, maxtilesize=maxtilesize,
-                       overlap=tileoverlap, alg=alg, weight=weight, stylescale=scale, algparams=algparams)
+            neuraltile(content=content, style=style, outfile=outfile, size=size, overlap=tileoverlap, alg=alg,
+                       weight=weight, stylescale=scale, algparams=algparams)
 
 
 def styletransfer_single(content, style, outfile, size=None, alg="gatys", weight=5.0, stylescale=1.0, algparams=None):
@@ -101,6 +107,8 @@ def styletransfer_single(content, style, outfile, size=None, alg="gatys", weight
     algfile = workdir.name + "/" + "algoutput.png"
     if alg == "gatys":
         gatys(rgbfile, stylepng, algfile, size, weight, stylescale, algparams)
+    elif alg == "gatys-multiresolution":
+        gatys_multiresolution(rgbfile, stylepng, algfile, size, weight, stylescale, algparams)
     elif alg in ["chen-schmidt", "chen-schmidt-inverse"]:
         chenschmidt(alg, rgbfile, stylepng, algfile, size, stylescale, algparams)
     # Enforce correct size
@@ -111,8 +119,8 @@ def styletransfer_single(content, style, outfile, size=None, alg="gatys", weight
     mergealpha(algfile, alphafile, outfile)
 
 
-def neuraltile(content, style, outfile, size=None, maxtilesize=400, overlap=100, alg="gatys", weight=5.0,
-               stylescale=1.0, algparams=None):
+def neuraltile(content, style, outfile, size=None, overlap=100, alg="gatys", weight=5.0, stylescale=1.0,
+               algparams=None):
     """Strategy to generate a high resolution image by running style transfer on overlapping image tiles"""
     LOGGER.info("Starting tiling strategy")
     if algparams is None:
@@ -123,7 +131,7 @@ def neuraltile(content, style, outfile, size=None, maxtilesize=400, overlap=100,
     fullshape = targetshape(content, size)
 
     # Compute number of tiles required to map all the image
-    xtiles, ytiles = tilegeometry(fullshape, maxtilesize, overlap)
+    xtiles, ytiles = tilegeometry(fullshape, alg, overlap)
 
     # First scale image to target resolution
     firstpass = workdir.name + "/" + "lowres.png"
@@ -185,6 +193,69 @@ def gatys(content, style, outfile, size, weight, stylescale, algparams):
     # Transform to original file format
     convert(tmpout.name, outfile)
     tmpout.close()
+
+
+def gatys_multiresolution(content, style, outfile, size, weight, stylescale, algparams, startres=256):
+    """Runs a multiresolution version of Gatys et al method
+
+    The multiresolution strategy starts by generating a small image, then using that image as initializer
+    for higher resolution images. This procedure is repeated up to the tilesize.
+
+    Once the maximum tile size attainable by L-BFGS is reached, more iterations are run by using Adam. This allows
+    to produce larger images using this method than the basic Gatys.
+
+    References:
+        * Gatys et al - Controlling Perceptual Factors in Neural Style Transfer (https://arxiv.org/abs/1611.07865)
+        * https://gist.github.com/jcjohnson/ca1f29057a187bc7721a3a8c418cc7db
+    """
+    # Multiresolution strategy: list of rounds, each round composed of a optimization method and a number of
+    # upresolution steps.
+    # Using "adam" as optimizer means that Adam will be used when necessary to attain higher resolutions
+    strategy = [
+        ["lbfgs", 7],
+        ["lbfgs", 7],
+        ["lbfgs", 7],
+        ["lbfgs", 7],
+        ["lbfgs", 7]
+    ]
+    LOGGER.info("Starting gatys-multiresolution with strategy " + str(strategy))
+
+    # Initialization
+    workdir = TemporaryDirectory()
+    maxres = targetshape(content, size)[0]
+    if maxres < startres:
+        LOGGER.warning("Target resolution (%d) might too small for the multiresolution method to work well" % maxres)
+        startres = maxres / 2.0
+    seed = None
+    tmpout = workdir.name + "/tmpout.png"
+
+    # Iterate over rounds
+    for roundnumber, (optimizer, steps) in enumerate(strategy):
+        LOGGER.info("gatys-multiresolution round %d with %s optimizer and %d steps" % (roundnumber, optimizer, steps))
+        roundmax = min(maxtile("gatys"), maxres) if optimizer == "lbfgs" else maxres
+        resolutions = np.linspace(startres, roundmax, steps, dtype=int)
+        iters = 1000
+        for stepnumber, res in enumerate(resolutions):
+            stepopt = "adam" if res > maxtile("gatys") else "lbfgs"
+            LOGGER.info("Step %d, resolution %d, optimizer %s" % (stepnumber, res, stepopt))
+            passparams = algparams[:]
+            passparams.extend([
+                "-num_iterations", iters,
+                "-tv_weight", "0",
+                "-print_iter", "0",
+                "-optimizer", stepopt
+            ])
+            if seed is not None:
+                passparams.extend([
+                    "-init", "image",
+                    "-init_image", seed
+                ])
+            gatys(content, style, tmpout, res, weight, stylescale, passparams)
+            seed = workdir.name + "/seed.png"
+            copyfile(tmpout, seed)
+            iters = max(iters/2.0, 100)
+
+    convert(tmpout, outfile)
 
 
 def chenschmidt(alg, content, style, outfile, size, stylescale, algparams):
@@ -250,16 +321,20 @@ def correctshape(result, original, size=None):
     assertshape(result, targetshape(original, size))
 
 
-def tilegeometry(imshape, maxtilesize=400, overlap=50):
+def tilegeometry(imshape, alg, overlap=50):
     """Given the shape of an image, computes the number of X and Y tiles to cover it"""
+    maxtilesize = maxtile(alg)
     xtiles = ceil(float(imshape[0] - maxtilesize) / float(maxtilesize - overlap) + 1)
     ytiles = ceil(float(imshape[1] - maxtilesize) / float(maxtilesize - overlap) + 1)
     return xtiles, ytiles
 
 
-def fitsingletile(imshape, maxtilesize):
-    """Returns whether a given image shape will fit in a single tile or not"""
-    return all([x <= maxtilesize for x in imshape])
+def fitsingletile(imshape, alg):
+    """Returns whether a given image shape will fit in a single tile or not.
+
+    This depends on the algorithm used and the GPU available in the system"""
+    mx = maxtile(alg)
+    return mx*mx >= np.prod(imshape)
 
 
 def targetshape(content, size=None):
@@ -272,3 +347,24 @@ def targetshape(content, size=None):
         return contentshape
     else:
         return [size, int(size * contentshape[1] / contentshape[0])]
+
+
+def gpuname():
+    """Returns the model name of the first available GPU"""
+    gpus = GPUtil.getGPUs()
+    if len(gpus) == 0:
+        raise ValueError("No GPUs detected in the system")
+    return gpus[0].name
+
+
+def maxtile(alg="gatys"):
+    """Returns the recommended configuration maximum tile size, based on the available GPU and algorithm to be run
+
+    The size returned should be understood as the maximum tile size for a square tile. If non-square tiles are used,
+    a maximum tile of the same number of pixels should be used.
+    """
+    gname = gpuname()
+    if gname not in GPUCONFIG:
+        LOGGER.warning("Unknown GPU model %s, will use default tiling parameters")
+        gname = "default"
+    return GPUCONFIG[gname][alg]

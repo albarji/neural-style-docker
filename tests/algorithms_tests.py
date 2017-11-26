@@ -38,6 +38,14 @@ def test_styletransfer_gatys_parameters():
     assert len(glob(tmpdir.name + "/dockersmall*cubism*")) == 1
 
 
+def test_styletransfer_gatysmultiresolution():
+    """Style transfer works without error for the Gatys algorithm with multiresolution"""
+    tmpdir = TemporaryDirectory()
+    styletransfer([CONTENTS + "docker.png"], [STYLES + "cubism.jpg"], tmpdir.name, alg="gatys-multiresolution",
+                  size=600)
+    assert len(glob(tmpdir.name + "/docker*cubism*")) == 1
+
+
 def test_styletransfer_chenschmidt():
     """Style transfer method works without error for the Chend-Schmidt algorithm"""
     tmpdir = TemporaryDirectory()
@@ -110,7 +118,7 @@ def test_neuraltile():
     tmpdir = TemporaryDirectory()
     content = CONTENTS + "avila-walls.jpg"
     outfile = tmpdir.name + "/tiled.png"
-    neuraltile(content, STYLES + "cubism.jpg", outfile, alg="chen-schmidt-inverse", maxtilesize=400, overlap=100)
+    neuraltile(content, STYLES + "cubism.jpg", outfile, alg="chen-schmidt-inverse", overlap=100)
     assert shape(outfile) == shape(content)
 
 
@@ -148,11 +156,11 @@ def test_alpha_tiling():
     tmpdir = TemporaryDirectory()
     # Transform image with alpha
     styletransfer([CONTENTS + "dockersmallalpha.png"], [STYLES + "cubism.jpg"], tmpdir.name, alg="chen-schmidt-inverse",
-                  maxtilesize=150)
+                  size=500)
     assert len(glob(tmpdir.name + "/*dockersmallalpha_cubism*")) == 1
     # Transform image without alpha
     styletransfer([CONTENTS + "dockersmall.png"], [STYLES + "cubism.jpg"], tmpdir.name, alg="chen-schmidt-inverse",
-                  maxtilesize=150)
+                  size=500)
     assert len(glob(tmpdir.name + "/*dockersmall_cubism*")) == 1
     # Check correct that generated image are different
     assertalldifferent(tmpdir.name + "/*cubism*")
