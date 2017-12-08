@@ -22,7 +22,7 @@ A dockerized version of neural style transfer algorithms.
 
 * [docker](https://www.docker.com/)
 * [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
-* Appropriate nvidia drivers for your GPU
+* Appropriate [nvidia drivers](http://www.nvidia.es/Download/index.aspx) for your GPU
 
 ### Installation
 
@@ -79,6 +79,7 @@ Better results can be attained by modifying some of the transfer parameters.
 The --alg parameter allows changing the neural style transfer algorithm to use.
 
 * **gatys**: highly detailed transfer, slow processing times (default)
+* **gatys-multiresolution**: multipass version of Gatys method, provides even better quality, but is also much slower
 * **chen-schmidt**: fast patch-based style transfer
 * **chen-schmidt-inverse**: even faster aproximation to chen-schmidt through the use of an inverse network
 
@@ -86,7 +87,8 @@ The following example illustrates kind of results to be expected by these differ
 
 | Content image | Algorithm | Style image |
 | ------------- | --------- | ----------- |
-| ![Content](./doc/avila-walls.jpg) | Gatys ![Gatys](./doc/avila-walls_broca_gatys_ss1.0_sw10.0.jpg) | ![Style](./doc/broca.jpg) | 
+| ![Content](./doc/avila-walls.jpg) | Gatys ![Gatys](./doc/avila-walls_broca_gatys_ss1.0_sw10.0.jpg) | ![Style](./doc/broca.jpg) |
+| ![Content](./doc/avila-walls.jpg) | Gatys Multiresolution ![Gatys-Multiresolution](./doc/avila-walls_broca_gatys-multiresolution_ss1.0_sw3.0.jpg) | ![Style](./doc/broca.jpg) |
 | ![Content](./doc/avila-walls.jpg) | Chen-Schmidt ![Chen-Schmidt](./doc/avila-walls_broca_chen-schmidt_ss1.0.jpg) | ![Style](./doc/broca.jpg) | 
 | ![Content](./doc/avila-walls.jpg) | Chen-Schmidt Inverse ![Chen-Schmidt Inverse](./doc/avila-walls_broca_chen-schmidt-inverse_ss1.0.jpg) | ![Style](./doc/broca.jpg) | 
 
@@ -102,28 +104,37 @@ of the target image, the height being scaled accordingly to keep proportion.
 
 If the image to be generated is large, a tiling strategy will be used, applying the neural style transfer method
 to small tiles of the image and stitching them together. Tiles overlap to provide some guarantees on overall
-consistency.
+consistency, though results might vary depending on the algorithm used.
 
 ![Tiling](./doc/tiling.png)
 
-You can control the size of these tiles through the --tilesize parameter.
-Higher values will generally produce better quality results and faster rendering times, but they will also incur in
-larger memory consumption.
-Note also that since the full style image is applied to each tile, as a result the style features will appear
+The size of these tiles is defined through the configuration file **gpuconfig.json** inside the container.
+This file contains dictionary keys for different GPU models and each neural style algorithm. Your GPU will be 
+automatically checked against the registered configurations and the appropriate tile size will be selected. These values
+have been chosen to maximize the use of the available GPU memory, asumming the whole GPU is available for the style
+transfer task.  
+
+If your GPU is not included in the configuration file, the *default* values will we used instead, though to obtain
+better performance you might want to edit this file and rebuild the docker images.
+
+Note also that since the full style image is applied to each tile separately, as a result the style features will appear
 as smaller in the rendered image.
 
 #### Style weight
 
-Gatys algorithm allows to adjust the amount of style imposed over the content image, by means of the --sw parameter.
-By default a value of **5** is used, meaning the importance of the style is 5 times the importance of the content.
-Smaller weight values result in the transfer of colors, while higher values transfer textures and even objects of the 
-style.
+Gatys and Gatys Multiresolution algorithms allow to adjust the amount of style imposed over the content image, by means 
+of the --sw parameter. By default a value of **5** is used, meaning the importance of the style is 5 times the 
+importance of the content. Smaller weight values result in the transfer of colors, while higher values transfer textures 
+and even objects of the style.
 
 If several weight values are provided, all combinations will be generated. For instance, to generate the same
 style transfer with three different weights, use
 
     nvidia-docker run --rm -v $(pwd):/images albarji/neural-style --content contents/docker.png --style styles/vangogh.png --sw 5 10 20
- 
+    
+Note also that they Gatys Multiresolution algorithm tends to produce a stronger style imprint, and this you might want
+to use weight values smaller than the default (e.g. 3). 
+
 #### Style scale
 
 If the transferred style results in too large or too small features, the scaling can be modified through the --ss 
@@ -145,5 +156,7 @@ logo example above the transparent background is not transformed.
 * [Gatys et al method](https://arxiv.org/abs/1508.06576), [implementation by jcjohnson](https://github.com/jcjohnson/neural-style)
 * [Chen-Schmidt method](https://arxiv.org/pdf/1612.04337.pdf), [implementation](https://github.com/rtqichen/style-swap)
 * [A review on style transfer methods](https://arxiv.org/pdf/1705.04058.pdf)
+* [Controlling Perceptual Factors in Neural Style Transfer](https://arxiv.org/abs/1611.07865)
 * [Neural-tiling method](https://github.com/ProGamerGov/Neural-Tile)
+* [Multiresolution strategy](https://gist.github.com/jcjohnson/ca1f29057a187bc7721a3a8c418cc7db)
 * [The Wikipedia logo](https://en.wikipedia.org/wiki/Wikipedia_logo)

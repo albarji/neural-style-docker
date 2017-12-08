@@ -1,0 +1,26 @@
+{
+  "GeForce GTX 970M": {
+    "gatys": 512,
+    "gatys-multiresolution": 750,
+    "chen-schmidt": 750,
+    "chen-schmidt-inverse": 400
+  },
+  "Tesla K80": {
+    "gatys": 1300,
+    "gatys-multiresolution": 1300,
+    "chen-schmidt": 1500,
+    "chen-schmidt-inverse": 800
+  },
+  "Tesla P100-PCIE-16GB": {
+    "gatys": 1300,
+    "gatys-multiresolution": 1300,
+    "chen-schmidt": 2048,
+    "chen-schmidt-inverse": 900
+  },
+  "default": {
+    "gatys": 512,
+    "gatys-multiresolution": 750,
+    "chen-schmidt": 750,
+    "chen-schmidt-inverse": 400
+  }
+}

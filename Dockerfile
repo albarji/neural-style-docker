@@ -29,6 +29,13 @@ RUN curl -o Miniconda3-latest-Linux-x86_64.sh https://repo.continuum.io/minicond
   && chmod +x Miniconda3-latest-Linux-x86_64.sh \
   && ./Miniconda3-latest-Linux-x86_64.sh -b -p "${MINICONDA_HOME}" \
 && rm Miniconda3-latest-Linux-x86_64.sh
+COPY conda.txt conda.txt
+RUN conda install -y --file=conda.txt
+RUN conda clean -y -i -l -p -t && \
+    rm -f conda.txt
+COPY pip.txt pip.txt
+RUN pip install -r pip.txt && \
+    rm -f pip.txt
 
 # Clone neural-style app
 WORKDIR /app
@@ -58,9 +65,11 @@ RUN ln -s /app/neural-style/models /app/style-swap/models
 # Add precomputed inverse network model
 ADD models/dec-tconv-sigmoid.t7 /app/style-swap/models/dec-tconv-sigmoid.t7
 
-# Copy wrapper scripts
+# Copy wrapper scripts and config files
 COPY ["entrypoint.py" ,"/app/entrypoint/"]
 COPY ["/neuralstyle/*.py", "/app/entrypoint/neuralstyle/"]
+COPY ["gpuconfig.json", "/app/entrypoint/"]
 
+WORKDIR /app/entrypoint
 ENTRYPOINT ["python", "/app/entrypoint/entrypoint.py"]
 

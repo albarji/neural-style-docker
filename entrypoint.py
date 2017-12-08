@@ -19,11 +19,11 @@ neural-style-docker: artistic style between images
     --ss STYLE_SCALE (default 1.0): scaling or list of scaling factors for the style images
     --alg ALGORITHM: style-transfer algorithm to use. Must be one of the following:
         gatys                   Highly detailed transfer, slow processing times (default)
+        gatys-multiresolution   Multipass version of Gatys method, provides even better quality
         chen-schmidt            Fast patch-based style transfer
         chen-schmidt-inverse    Even faster aproximation to chen-schmidt through the use of an inverse network
-    --tilesize TILE_SIZE: maximum size of each tile in the style transfer.
-        If your GPU runs out of memory you should try reducing this value. Default: 400
-    --tileoverlap TILE_OVERLAP: overlap of tiles in the style transfer, measured in pixels. Default: 100
+    --tileoverlap TILE_OVERLAP: overlap of tiles in the style transfer, measured in pixels. If you experience
+        artifacts in the image you should try increasing this. Default: 100
 
     Additionally provided parameters are carried on to the underlying algorithm.
     
@@ -42,7 +42,6 @@ def main(argv=None):
         alg = "gatys"
         weights = None
         stylescales = None
-        tilesize = None
         tileoverlap = None
         otherparams = []
 
@@ -72,9 +71,6 @@ def main(argv=None):
             elif argv[i] == "--ss":
                 stylescales = [float(x) for x in sublist(argv[i+1:], stopper="-")]
                 i += len(stylescales) + 1
-            elif argv[i] == "--tilesize":
-                tilesize = int(argv[i+1])
-                i += 2
             elif argv[i] == "--tileoverlap":
                 tileoverlap = int(argv[i+1])
                 i += 2
@@ -100,10 +96,8 @@ def main(argv=None):
         LOGGER.info("\tStyle weights = %s" % str(weights))
         LOGGER.info("\tStyle scales = %s" % str(stylescales))
         LOGGER.info("\tSize = %s" % str(size))
-        LOGGER.info("\tTile size = %s" % str(tilesize))
         LOGGER.info("\tTile overlap = %s" % str(tileoverlap))
-        styletransfer(contents, styles, savefolder, size, alg, weights, stylescales, tilesize, tileoverlap,
-                      algparams=otherparams)
+        styletransfer(contents, styles, savefolder, size, alg, weights, stylescales, tileoverlap, algparams=otherparams)
         return 1
 
     except Exception:
