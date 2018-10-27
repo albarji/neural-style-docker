@@ -351,7 +351,11 @@ def targetshape(content, size=None):
 
 def gpuname():
     """Returns the model name of the first available GPU"""
-    gpus = GPUtil.getGPUs()
+    try:
+        gpus = GPUtil.getGPUs()
+    except:
+        LOGGER.warning("Unable to detect GPU model. Is your GPU configured? Are you running with nvidia-docker?")
+        return "UNKNOWN"
     if len(gpus) == 0:
         raise ValueError("No GPUs detected in the system")
     return gpus[0].name
@@ -365,6 +369,6 @@ def maxtile(alg="gatys"):
     """
     gname = gpuname()
     if gname not in GPUCONFIG:
-        LOGGER.warning("Unknown GPU model %s, will use default tiling parameters")
+        LOGGER.warning(f"Unknown GPU model {gname}, will use default tiling parameters")
         gname = "default"
     return GPUCONFIG[gname][alg]

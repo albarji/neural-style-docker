@@ -30,8 +30,8 @@ RUN curl -o Miniconda3-latest-Linux-x86_64.sh https://repo.continuum.io/minicond
   && ./Miniconda3-latest-Linux-x86_64.sh -b -p "${MINICONDA_HOME}" \
 && rm Miniconda3-latest-Linux-x86_64.sh
 COPY conda.txt conda.txt
-RUN conda install -y --file=conda.txt
-RUN conda clean -y -i -l -p -t && \
+RUN conda install -y --file=conda.txt && \
+    conda clean -y -i -l -p -t && \
     rm -f conda.txt
 COPY pip.txt pip.txt
 RUN pip install -r pip.txt && \

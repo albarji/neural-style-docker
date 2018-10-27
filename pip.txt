@@ -1,1 +1,1 @@
-gputil
+gputil==1.3.0
