@@ -354,7 +354,7 @@ def gpuname():
     try:
         gpus = GPUtil.getGPUs()
     except:
-        LOGGER.warning("Unable to detect GPU model")
+        LOGGER.warning("Unable to detect GPU model. Is your GPU configured? Are you running with nvidia-docker?")
         return "UNKNOWN"
     if len(gpus) == 0:
         raise ValueError("No GPUs detected in the system")
