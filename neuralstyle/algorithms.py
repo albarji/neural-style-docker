@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory, NamedTemporaryFile
 from shutil import copyfile
 import logging
 from math import ceil
-import numpy as np
+from functools import reduce
 import json
 import GPUtil
 from neuralstyle.utils import filename, fileext
@@ -233,7 +233,7 @@ def gatys_multiresolution(content, style, outfile, size, weight, stylescale, alg
     for roundnumber, (optimizer, steps) in enumerate(strategy):
         LOGGER.info("gatys-multiresolution round %d with %s optimizer and %d steps" % (roundnumber, optimizer, steps))
         roundmax = min(maxtile("gatys"), maxres) if optimizer == "lbfgs" else maxres
-        resolutions = np.linspace(startres, roundmax, steps, dtype=int)
+        resolutions = linspace_int(startres, roundmax, steps)
         iters = 1000
         for stepnumber, res in enumerate(resolutions):
             stepopt = "adam" if res > maxtile("gatys") else "lbfgs"
@@ -372,3 +372,13 @@ def maxtile(alg="gatys"):
         LOGGER.warning(f"Unknown GPU model {gname}, will use default tiling parameters")
         gname = "default"
     return GPUCONFIG[gname][alg]
+
+
+def linspace_int(start, end, steps):
+    """Returns "steps" equally spaced values between start and end. All values are integer values."""
+    return [start + int((end - start) / (steps-1) * i) for i in range(steps)]
+
+
+def prod(arr):
+    """Product of all elements in an array"""
+    return reduce(lambda x, y: x*y, arr)

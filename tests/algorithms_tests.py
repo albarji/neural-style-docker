@@ -3,7 +3,7 @@
 #
 from tempfile import TemporaryDirectory
 from glob import glob
-from neuralstyle.algorithms import styletransfer, neuraltile, ALGORITHMS
+from neuralstyle.algorithms import styletransfer, neuraltile, ALGORITHMS, linspace_int, prod
 from neuralstyle.imagemagick import shape, equalimages
 from neuralstyle.utils import filename
 
@@ -164,3 +164,32 @@ def test_alpha_tiling():
     assert len(glob(tmpdir.name + "/*dockersmall_cubism*")) == 1
     # Check correct that generated image are different
     assertalldifferent(tmpdir.name + "/*cubism*")
+
+
+def test_linspace_int():
+    """Linear spaces of integers are calculated correctly"""
+    tests = [
+        ({"start": 0, "end": 100, "steps": 2}, [0, 100]),
+        ({"start": 0, "end": 100, "steps": 3}, [0, 50, 100]),
+        ({"start": 0, "end": 100, "steps": 5}, [0, 25, 50, 75, 100])
+    ]
+
+    for inputs, expected in tests:
+        outputs = linspace_int(**inputs)
+        print(f"Inputs {inputs}, expected {expected}, result {outputs}")
+        assert all([x == y for x, y in zip(expected, outputs)])
+
+
+def test_prod():
+    """Product of elements in an array is calculated correctly"""
+    tests = [
+        ([1, 2, 3], 6),
+        ([3, 2, 1], 6),
+        ([10, 20, 0], 0),
+        ([50, 100, 2], 10000)
+    ]
+
+    for inputs, expected in tests:
+        outputs = prod(inputs)
+        print(f"Inputs {inputs}, expected {expected}, result {outputs}")
+        assert expected == outputs
