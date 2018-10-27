@@ -334,7 +334,7 @@ def fitsingletile(imshape, alg):
 
     This depends on the algorithm used and the GPU available in the system"""
     mx = maxtile(alg)
-    return mx*mx >= np.prod(imshape)
+    return mx*mx >= prod(imshape)
 
 
 def targetshape(content, size=None):
