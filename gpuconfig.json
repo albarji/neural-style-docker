@@ -1,4 +1,10 @@
 {
+  "GeForce GTX 1060 6GB": {
+    "gatys": 2048,
+    "gatys-multiresolution": 2048,
+    "chen-schmidt": 2048,
+    "chen-schmidt-inverse": 2048
+  },
   "GeForce GTX 970M": {
     "gatys": 512,
     "gatys-multiresolution": 750,
